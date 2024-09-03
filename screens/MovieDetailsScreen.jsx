@@ -1,22 +1,24 @@
-// src/screens/MovieDetailsScreen.js
+// MovieDetailsScreen.js
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, ScrollView, StyleSheet } from "react-native";
 
-export default function MovieDetailsScreen({ route }) {
+const MovieDetailsScreen = ({ route }) => {
   const { movie } = route.params;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={movieDetailsStyles.container}>
       <Image
         source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
-        style={styles.movieImage}
+        style={movieDetailsStyles.movieImage}
       />
-      <Text style={styles.title}>{movie.title}</Text>
-      <Text style={styles.overview}>{movie.overview}</Text>
-      {/* Add more details here as needed */}
-    </View>
+      <Text style={movieDetailsStyles.title}>{movie.title}</Text>
+      <Text style={movieDetailsStyles.overview}>{movie.overview}</Text>
+    </ScrollView>
   );
-}
+};
+
+export default MovieDetailsScreen;
+// MovieDetailsScreenStyles.js
 
 const movieDetailsStyles = StyleSheet.create({
   container: {

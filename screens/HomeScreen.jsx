@@ -1,116 +1,78 @@
+// HomeScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Image,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   FlatList,
   ActivityIndicator,
-  Button,
+  StyleSheet,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import DropDownPicker from "react-native-dropdown-picker";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import MovieCard from "../components/MovieCard";
 
-const HomeScreen = () => {
-  const navigation = useNavigation();
+export default function HomeScreen() {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(null);
+  const [value, setValue] = useState("popular");
   const [items, setItems] = useState([
     { label: "Popular", value: "popular" },
     { label: "Top Movies", value: "top_movies" },
     { label: "Upcoming Movies", value: "upcoming_movies" },
     { label: "Now Playing Movies", value: "now_playing_movies" },
   ]);
-
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const navigation = useNavigation();
 
   useEffect(() => {
-    console.log(1);
+    fetchMovies(value);
+  }, [value]);
 
-    fetchMovies();
-    getFavorites();
-  }, []);
-
-  const fetchMovies = async () => {
+  const fetchMovies = async (category) => {
+    setLoading(true);
     try {
       const response = await axios.get(
-        "https://api.themoviedb.org/3/movie/popular?api_key=7a1c19ea3c361a4d3cc53eb70ef8298c"
+        `https://api.themoviedb.org/3/movie/${category}?api_key=7a1c19ea3c361a4d3cc53eb70ef8298c`
       );
       setMovies(response.data.results);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching movies:", error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const getFavorites = async () => {
-    try {
-      const storedFavorites = await AsyncStorage.getItem("favorites");
-      if (storedFavorites) {
-        setFavorites(JSON.parse(storedFavorites));
-      }
-    } catch (error) {
-      console.error("Error retrieving favorites:", error);
-    }
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // Implement search functionality here
   };
 
-  const toggleFavorite = async (movie) => {
-    let updatedFavorites = [];
-    if (favorites.some((fav) => fav.id === movie.id)) {
-      // Remove from favorites
-      updatedFavorites = favorites.filter((fav) => fav.id !== movie.id);
-    } else {
-      // Add to favorites
-      updatedFavorites = [...favorites, movie];
-    }
-
-    setFavorites(updatedFavorites);
-    await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-  };
-
-  const renderMovieItem = ({ item }) => {
-    const isFavorite = favorites.some((fav) => fav.id === item.id);
-    return (
-      <View style={styles.movieCard}>
-        <Image
-          source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
-          style={styles.movieImage}
-        />
-        <View style={styles.descContainer}>
-          <Text style={styles.movieTitle}>{item.title}</Text>
-          <TouchableOpacity onPress={() => toggleFavorite(item)}>
-            <Icon
-              name={isFavorite ? "heart" : "heart-o"}
-              size={20}
-              color={isFavorite ? "red" : "#fff"}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  const filteredMovies = searchQuery
+    ? movies.filter((movie) =>
+        movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : movies;
 
   return (
-    <View style={styles.container}>
-      {/* <Button title="click"></Button> */}
-      <View style={styles.header}>
+    <View style={homeStyles.container}>
+      <View style={homeStyles.header}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
           <Icon name="bars" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Home</Text>
+        <Text style={homeStyles.headerTitle}>Home</Text>
       </View>
-      <View style={styles.searchFilterContainer}>
+      <View style={homeStyles.searchFilterContainer}>
         <TextInput
           placeholder="Search"
-          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={handleSearch}
+          style={homeStyles.searchInput}
           placeholderTextColor="#aaa"
         />
         <DropDownPicker
@@ -121,8 +83,8 @@ const HomeScreen = () => {
           setValue={setValue}
           setItems={setItems}
           placeholder="Filter"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
+          style={homeStyles.dropdown}
+          dropDownContainerStyle={homeStyles.dropdownContainer}
           zIndex={1000}
           zIndexInverse={600}
         />
@@ -135,15 +97,16 @@ const HomeScreen = () => {
         />
       ) : (
         <FlatList
-          data={movies}
-          renderItem={renderMovieItem}
+          data={filteredMovies}
+          renderItem={({ item }) => <MovieCard movie={item} />}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.movieList}
+          contentContainerStyle={homeStyles.movieList}
         />
       )}
     </View>
   );
-};
+}
+// HomeScreenStyles.js
 
 const homeStyles = StyleSheet.create({
   container: {
@@ -179,7 +142,6 @@ const homeStyles = StyleSheet.create({
     marginLeft: 10,
     backgroundColor: "#444",
     borderWidth: 0,
-    zIndex: 1000,
   },
   dropdownContainer: {
     backgroundColor: "#444",
@@ -189,5 +151,3 @@ const homeStyles = StyleSheet.create({
     padding: 10,
   },
 });
-
-export default HomeScreen;

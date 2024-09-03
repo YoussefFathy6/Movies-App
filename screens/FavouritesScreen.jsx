@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// FavoritesScreen.js
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,55 +8,61 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Icon from "react-native-vector-icons/FontAwesome";
+import MovieCard from "../components/MovieCard";
 
-const FavoritesScreen = () => {
-  const [favorites, setFavorites] = useState([]);
+export default function FavoritesScreen() {
+  const [favoriteMovies, setFavoriteMovies] = useState([]);
 
   useEffect(() => {
-    getFavorites();
+    loadFavorites();
   }, []);
 
-  const getFavorites = async () => {
+  const loadFavorites = async () => {
     try {
       const storedFavorites = await AsyncStorage.getItem("favorites");
       if (storedFavorites) {
-        setFavorites(JSON.parse(storedFavorites));
+        setFavoriteMovies(JSON.parse(storedFavorites));
       }
     } catch (error) {
-      console.error("Error retrieving favorites:", error);
+      console.error("Failed to load favorites:", error);
     }
   };
 
-  const toggleFavorite = async (movie) => {
-    const updatedFavorites = favorites.filter((fav) => fav.id !== movie.id);
-    setFavorites(updatedFavorites);
+  const removeFavorite = async (movie) => {
+    const updatedFavorites = favoriteMovies.filter(
+      (favMovie) => favMovie.id !== movie.id
+    );
+    setFavoriteMovies(updatedFavorites);
     await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const renderFavoriteItem = ({ item }) => (
-    <View style={styles.movieCard}>
-      <Text style={styles.movieTitle}>{item.title}</Text>
-      <TouchableOpacity onPress={() => toggleFavorite(item)}>
-        <Icon name="remove" size={20} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      {favorites.length === 0 ? (
-        <Text style={styles.emptyText}>The Favorites List is Empty</Text>
+    <View style={favoritesStyles.container}>
+      {favoriteMovies.length === 0 ? (
+        <Text style={favoritesStyles.emptyText}>
+          The Favorites List is Empty
+        </Text>
       ) : (
         <FlatList
-          data={favorites}
-          renderItem={renderFavoriteItem}
+          data={favoriteMovies}
+          renderItem={({ item }) => (
+            <View style={favoritesStyles.movieCard}>
+              <MovieCard movie={item} />
+              <TouchableOpacity
+                style={favoritesStyles.removeButton}
+                onPress={() => removeFavorite(item)}
+              >
+                <Text style={favoritesStyles.removeButtonText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           keyExtractor={(item) => item.id.toString()}
         />
       )}
     </View>
   );
-};
+}
+// FavoritesScreenStyles.js
 
 const favoritesStyles = StyleSheet.create({
   container: {
@@ -92,5 +99,3 @@ const favoritesStyles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-export default FavoritesScreen;

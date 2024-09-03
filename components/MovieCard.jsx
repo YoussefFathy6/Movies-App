@@ -1,36 +1,56 @@
-// src/components/MovieCard.js
-import React from "react";
+// MovieCard.js
+import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
-export default function MovieCard({
-  movie,
-  isFavorite,
-  onPress,
-  onToggleFavorite,
-}) {
+const MovieCard = ({ movie }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const navigation = useNavigation();
+
+  const toggleFavorite = async () => {
+    setIsFavorite(!isFavorite);
+    let storedFavorites = await AsyncStorage.getItem("favorites");
+    storedFavorites = storedFavorites ? JSON.parse(storedFavorites) : [];
+    if (!isFavorite) {
+      storedFavorites.push(movie);
+    } else {
+      storedFavorites = storedFavorites.filter(
+        (favMovie) => favMovie.id !== movie.id
+      );
+    }
+    await AsyncStorage.setItem("favorites", JSON.stringify(storedFavorites));
+  };
+
   return (
-    <TouchableOpacity style={styles.movieCard} onPress={onPress}>
+    <TouchableOpacity
+      style={movieCardStyles.movieCard}
+      onPress={() => navigation.navigate("MovieDetails", { movie })}
+    >
       <Image
         source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
-        style={styles.movieImage}
+        style={movieCardStyles.movieImage}
       />
-      <View style={styles.descContainer}>
-        <Text style={styles.movieTitle}>{movie.title}</Text>
+      <View style={movieCardStyles.descContainer}>
+        <Text style={movieCardStyles.movieTitle}>{movie.title}</Text>
         <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={onToggleFavorite}
+          style={movieCardStyles.favoriteButton}
+          onPress={toggleFavorite}
         >
           <Icon
             name={isFavorite ? "heart" : "heart-o"}
-            size={20}
-            color={isFavorite ? "red" : "#fff"}
+            size={24}
+            color="#f00"
           />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
-}
+};
+
+export default MovieCard;
+// MovieCardStyles.js
 
 const movieCardStyles = StyleSheet.create({
   movieCard: {
