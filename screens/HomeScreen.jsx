@@ -8,17 +8,16 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Button,
 } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import DropDownPicker from "react-native-dropdown-picker";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Drawer = createDrawerNavigator();
-
-function HomeScreen({ navigation }) {
+const HomeScreen = () => {
+  const navigation = useNavigation();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([
@@ -33,6 +32,8 @@ function HomeScreen({ navigation }) {
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
+    console.log(1);
+
     fetchMovies();
     getFavorites();
   }, []);
@@ -99,6 +100,7 @@ function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* <Button title="click"></Button> */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
           <Icon name="bars" size={24} color="#fff" />
@@ -141,68 +143,9 @@ function HomeScreen({ navigation }) {
       )}
     </View>
   );
-}
+};
 
-function FavoritesScreen() {
-  const [favorites, setFavorites] = useState([]);
-
-  useEffect(() => {
-    getFavorites();
-  }, []);
-
-  const getFavorites = async () => {
-    try {
-      const storedFavorites = await AsyncStorage.getItem("favorites");
-      if (storedFavorites) {
-        setFavorites(JSON.parse(storedFavorites));
-      }
-    } catch (error) {
-      console.error("Error retrieving favorites:", error);
-    }
-  };
-
-  const toggleFavorite = async (movie) => {
-    const updatedFavorites = favorites.filter((fav) => fav.id !== movie.id);
-    setFavorites(updatedFavorites);
-    await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-  };
-
-  const renderFavoriteItem = ({ item }) => (
-    <View style={styles.movieCard}>
-      <Text style={styles.movieTitle}>{item.title}</Text>
-      <TouchableOpacity onPress={() => toggleFavorite(item)}>
-        <Icon name="remove" size={20} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      {favorites.length === 0 ? (
-        <Text style={styles.emptyText}>The Favorites List is Empty</Text>
-      ) : (
-        <FlatList
-          data={favorites}
-          renderItem={renderFavoriteItem}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      )}
-    </View>
-  );
-}
-
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Drawer.Navigator initialRouteName="Home">
-        <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Favorites" component={FavoritesScreen} />
-      </Drawer.Navigator>
-    </NavigationContainer>
-  );
-}
-
-const styles = StyleSheet.create({
+const homeStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#1e1e1e",
@@ -241,43 +184,10 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     backgroundColor: "#444",
     borderWidth: 0,
-    zIndex: 1000,
   },
   movieList: {
     padding: 10,
   },
-  movieCard: {
-    backgroundColor: "#333",
-    borderRadius: 10,
-    overflow: "hidden",
-    marginBottom: 10,
-    padding: 10,
-    flexDirection: "column",
-    alignItems: "center",
-    elevation: 1,
-  },
-  descContainer: {
-    flexDirection: "row",
-    padding: 10,
-  },
-  movieImage: {
-    width: "100%",
-    height: 250,
-    borderRadius: 8,
-  },
-  movieTitle: {
-    color: "#fff",
-    fontSize: 24,
-    flex: 1,
-    marginLeft: 10,
-  },
-  favoriteButton: {
-    padding: 8,
-  },
-  emptyText: {
-    color: "#fff",
-    fontSize: 18,
-    textAlign: "center",
-    marginTop: 20,
-  },
 });
+
+export default HomeScreen;
